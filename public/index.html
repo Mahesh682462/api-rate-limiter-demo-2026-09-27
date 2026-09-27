@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Limiter Demo</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; line-height: 1.6; background-color: #f4f4f4; color: #333; }
+        h1 { color: #0056b3; }
+        button { padding: 10px 15px; font-size: 16px; margin-right: 10px; margin-bottom: 20px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; transition: background-color 0.3s ease; }
+        button:hover { background-color: #0056b3; }
+        #results { border: 1px solid #ddd; padding: 10px; min-height: 100px; max-height: 300px; overflow-y: auto; background-color: #fff; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        p { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>API Rate Limiter Demo</h1>
+    <p>Click the buttons to test the rate limit (5 requests per 10 seconds for `/api/protected`).</p>
+    <button id="callApiBtn">Call Protected API (x1)</button>
+    <button id="callApiMultiBtn">Call Protected API (x10)</button>
+    <button id="callPublicApiBtn">Call Public API (x1)</button>
+    <div id="results"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        const callApiBtn = document.getElementById('callApiBtn');
+        const callApiMultiBtn = document.getElementById('callApiMultiBtn');
+        const callPublicApiBtn = document.getElementById('callPublicApiBtn');
+
+        async function callApi(endpoint, index = 1) {
+            try {
+                const response = await fetch(endpoint);
+                const text = await response.text();
+                let data; // To hold parsed JSON or plain text
+
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = { message: text }; // If not JSON, treat as plain text
+                }
+
+                if (response.ok) {
+                    resultsDiv.innerHTML += `<p class="success">[${index}] Status: ${response.status}, Message: ${data.message}</p>`;
+                } else {
+                    resultsDiv.innerHTML += `<p class="error">[${index}] Status: ${response.status}, Message: ${data.message}</p>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<p class="error">[${index}] Network error: ${error.message}</p>`;
+            }
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        callApiBtn.addEventListener('click', () => callApi('/api/protected'));
+        callPublicApiBtn.addEventListener('click', () => callApi('/api/public'));
+
+        callApiMultiBtn.addEventListener('click', async () => {
+            resultsDiv.innerHTML = ''; // Clear previous results
+            for (let i = 1; i <= 10; i++) {
+                await callApi('/api/protected', i);
+            }
+        });
+    </script>
+</body>
+</html>
